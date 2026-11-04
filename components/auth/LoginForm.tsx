@@ -1,36 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { TextField, PasswordField, GoogleButton, Divider } from "./Fields";
+import Toast, { type ToastData } from "@/components/Toast";
+import { EMAIL_RE } from "@/lib/validation";
+import { useRedirectIfSignedIn } from "./useRedirectIfSignedIn";
+
+type Errors = { email?: string; password?: string; form?: string };
 
 export default function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  useRedirectIfSignedIn();
+
+  const justRegistered = searchParams.get("registered") === "1";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
+  const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<ToastData | null>(
+    justRegistered
+      ? { type: "success", message: "Akun berhasil dibuat. Silakan masuk dengan akun barumu." }
+      : null
+  );
+  const closeToast = useCallback(() => setToast(null), []);
+
+  // Bersihkan ?registered=1 dari alamat supaya notifikasi tidak muncul lagi saat refresh
+  useEffect(() => {
+    if (justRegistered) router.replace("/signin", { scroll: false });
+  }, [justRegistered, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const next: typeof errors = {};
-    if (!/^\S+@\S+\.\S+$/.test(email)) next.email = "Masukkan alamat email yang valid.";
+    const next: Errors = {};
+    if (!EMAIL_RE.test(email.trim())) next.email = "Masukkan alamat email yang valid.";
     if (!password) next.password = "Kata sandi wajib diisi.";
     setErrors(next);
     if (Object.keys(next).length) return;
 
     setLoading(true);
     try {
-      // TODO: panggil API login kamu di sini, contoh:
-      // const res = await fetch("/api/auth/login", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email, password, remember }),
-      // });
-      // if (!res.ok) throw new Error();
-      // router.push("/");
-      await new Promise((r) => setTimeout(r, 800)); // simulasi
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password, remember }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        router.push("/");
+        router.refresh();
+        return;
+      }
+
+      if (data.error === "USER_NOT_FOUND") {
+        setErrors({ email: "Email ini belum terdaftar." });
+        setToast({
+          type: "error",
+          message: data.message,
+          action: { label: "Daftar sekarang", href: "/signup" },
+        });
+      } else if (data.error === "WRONG_PASSWORD") {
+        setErrors({ password: data.message });
+      } else {
+        setErrors({ form: data.message ?? "Terjadi kesalahan. Coba lagi." });
+      }
     } catch {
-      setErrors({ form: "Email atau kata sandi salah. Coba lagi." });
+      setErrors({ form: "Tidak dapat terhubung ke server. Coba lagi." });
     } finally {
       setLoading(false);
     }
@@ -38,6 +77,8 @@ export default function LoginForm() {
 
   return (
     <>
+      <Toast toast={toast} onClose={closeToast} />
+
       <GoogleButton label="Masuk dengan Google" />
       <Divider text="atau dengan email" />
 

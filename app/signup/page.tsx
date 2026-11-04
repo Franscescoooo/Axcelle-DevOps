@@ -5,7 +5,7 @@ import SignupForm from "@/components/auth/SignupForm";
 
 export const metadata: Metadata = { title: "Daftar – Eclipse" };
 
-export default function SignupPage() {
+export default function SignUpPage() {
   return (
     <AuthLayout
       title="Buat akun Eclipse"

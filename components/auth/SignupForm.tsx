@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { TextField, PasswordField, GoogleButton, Divider } from "./Fields";
+import Toast, { type ToastData } from "@/components/Toast";
+import { EMAIL_RE, PHONE_RE, normalizePhone } from "@/lib/validation";
+import { useRedirectIfSignedIn } from "./useRedirectIfSignedIn";
 
 type Errors = Partial<Record<"name" | "email" | "phone" | "password" | "confirm" | "terms" | "form", string>>;
 
 export default function SignupForm() {
+  const router = useRouter();
+  useRedirectIfSignedIn();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -14,13 +21,15 @@ export default function SignupForm() {
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const next: Errors = {};
     if (name.trim().length < 2) next.name = "Nama lengkap wajib diisi.";
-    if (!/^\S+@\S+\.\S+$/.test(email)) next.email = "Masukkan alamat email yang valid.";
-    if (!/^(\+62|62|0)8\d{8,11}$/.test(phone.replace(/[\s-]/g, "")))
+    if (!EMAIL_RE.test(email.trim())) next.email = "Masukkan alamat email yang valid.";
+    if (!PHONE_RE.test(normalizePhone(phone)))
       next.phone = "Masukkan nomor HP Indonesia yang valid, contoh 081234567890.";
     if (password.length < 8) next.password = "Kata sandi minimal 8 karakter.";
     if (confirm !== password) next.confirm = "Konfirmasi kata sandi tidak sama.";
@@ -30,17 +39,33 @@ export default function SignupForm() {
 
     setLoading(true);
     try {
-      // TODO: panggil API pendaftaran kamu di sini, contoh:
-      // const res = await fetch("/api/auth/signup", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ name, email, phone, password }),
-      // });
-      // if (!res.ok) throw new Error();
-      // router.push("/masuk");
-      await new Promise((r) => setTimeout(r, 800)); // simulasi
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        // Daftar berhasil -> arahkan ke halaman masuk untuk login ulang
+        router.push("/signin?registered=1");
+        return;
+      }
+
+      if (data.error === "EMAIL_TAKEN") {
+        setErrors({ email: "Email ini sudah terdaftar." });
+        setToast({
+          type: "error",
+          message: data.message,
+          action: { label: "Masuk sekarang", href: "/signin" },
+        });
+      } else if (data.error === "VALIDATION" && data.fields) {
+        setErrors(data.fields);
+      } else {
+        setErrors({ form: data.message ?? "Pendaftaran gagal. Coba lagi." });
+      }
     } catch {
-      setErrors({ form: "Pendaftaran gagal. Periksa data kamu lalu coba lagi." });
+      setErrors({ form: "Tidak dapat terhubung ke server. Coba lagi." });
     } finally {
       setLoading(false);
     }
@@ -48,6 +73,8 @@ export default function SignupForm() {
 
   return (
     <>
+      <Toast toast={toast} onClose={closeToast} />
+
       <GoogleButton label="Daftar dengan Google" />
       <Divider text="atau dengan email" />
 
