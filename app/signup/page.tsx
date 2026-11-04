@@ -13,7 +13,7 @@ export default function SignupPage() {
       footer={
         <>
           Sudah punya akun?{" "}
-          <Link href="/masuk" className="font-medium text-amber hover:underline">Masuk</Link>
+          <Link href="/signin" className="font-medium text-amber hover:underline">Masuk</Link>
         </>
       }
     >
