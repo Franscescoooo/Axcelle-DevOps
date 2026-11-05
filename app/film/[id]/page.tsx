@@ -33,14 +33,11 @@ const cinemas = [
   { name: "Eclipse Plaza Medan Fair", area: "Medan Petisah", times: ["11:45", "14:30", "17:15", "21:00"] },
 ];
 
-export default async function MovieDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  // id tersedia untuk pengambilan data nanti; belum dipakai di mockup.
-  await params;
-
+// Catatan: halaman ini belum membaca `params.id` karena masih mockup statis.
+// Saat data film sudah ada, ubah jadi `async function MovieDetailPage({ params }:
+// { params: Promise<{ id: string }> })` lalu `const { id } = await params;`
+// untuk mengambil film berdasarkan id.
+export default function MovieDetailPage() {
   return (
     <>
       <Navbar />
