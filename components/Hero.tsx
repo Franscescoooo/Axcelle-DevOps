@@ -1,5 +1,5 @@
 const fieldClass =
-  "mt-1 w-full rounded-lg border border-ink/20 bg-white/60 px-3 py-2.5 text-ink outline-none focus:border-velvet focus:ring-2 focus:ring-velvet/30";
+  "mt-1 w-full rounded-lg border border-ink/20 bg-[#252240] px-3 py-2.5 text-white outline-none focus:border-amber focus:ring-2 focus:ring-amber/30";
 
 export default function Hero() {
   return (
@@ -21,7 +21,7 @@ export default function Hero() {
         {/* Form pencarian berbentuk tiket */}
         <form
           action="/jadwal"
-          className="relative mt-10 rounded-2xl bg-paper p-6 text-ink shadow-2xl sm:p-8"
+          className="relative mt-10 rounded-2xl bg-plum/60 p-6 text-white shadow-2xl sm:p-8"
         >
           {/* Lekukan tiket kiri-kanan */}
           <span aria-hidden className="absolute -left-3 top-1/2 hidden h-6 w-6 -translate-y-1/2 rounded-full bg-ink md:block" />
@@ -53,7 +53,7 @@ export default function Hero() {
 
             <button
               type="submit"
-              className="rounded-lg bg-velvet px-6 py-3 font-semibold text-paper transition-colors hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velvet"
+              className="rounded-lg bg-amber px-6 py-3 font-semibold text-black transition-colors hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velvet"
             >
               Cari jadwal
             </button>
