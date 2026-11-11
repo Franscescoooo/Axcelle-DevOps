@@ -1,13 +1,6 @@
 import Link from "next/link";
 
-export type Movie = {
-  id: string;
-  title: string;
-  genre: string;
-  duration: string; // contoh: "2j 15m"
-  rating: string; // contoh: "13+"
-  posterUrl?: string;
-};
+import type { Movie } from "@/lib/movies";
 
 export function MovieCard({ movie }: { movie: Movie }) {
   return (

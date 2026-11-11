@@ -1,0 +1,24 @@
+{
+  "name": "axcelle-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "sync": "tsx src/sync-tmdb.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "sync:prod": "node dist/sync-tmdb.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}
