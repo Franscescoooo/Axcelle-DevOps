@@ -25,11 +25,7 @@ export function MovieCard({ movie }: { movie: Movie }) {
         {movie.title}
       </h3>
       <p className="text-sm text-mist">
-<<<<<<< HEAD
-        {movie.genre} · {movie.duration}
-=======
         {movie.genre.join(", ")} · {movie.duration}
->>>>>>> 8ca5d25 (Menambahkan fitur booking, kursi, konfirmasi, receipt, history)
       </p>
     </Link>
   );

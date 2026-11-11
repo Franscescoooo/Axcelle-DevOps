@@ -100,12 +100,6 @@ app.get("/api/movies", async (req, res) => {
 // GET /api/movies/:id?date=YYYY-MM-DD  (default: hari ini, zona Asia/Jakarta)
 app.get("/api/movies/:id", async (req, res) => {
   const id = Number(req.params.id);
-<<<<<<< HEAD
-  if (!Number.isInteger(id)) return res.status(404).json({ error: "NOT_FOUND" });
-
-  const { rows } = await pool.query<MovieRow>(`SELECT ${COLS} FROM movies WHERE id = $1`, [id]);
-  if (rows.length === 0) return res.status(404).json({ error: "NOT_FOUND" });
-=======
   if (!Number.isInteger(id)) {
     res.status(404).json({ error: "NOT_FOUND" });
     return;
@@ -116,7 +110,6 @@ app.get("/api/movies/:id", async (req, res) => {
     res.status(404).json({ error: "NOT_FOUND" });
     return;
   }
->>>>>>> 8ca5d25 (Menambahkan fitur booking, kursi, konfirmasi, receipt, history)
 
   const date =
     typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)

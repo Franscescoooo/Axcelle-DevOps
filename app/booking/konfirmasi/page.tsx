@@ -1,17 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { readDraft, saveDraft, rupiah, type BookingDraft } from "@/lib/booking-storage";
+import { saveDraft, rupiah, useBookingDraft } from "@/lib/booking-storage";
 
 const methods = ["QRIS", "OVO", "DANA", "Transfer Bank"];
 export default function ConfirmationPage() {
-  const [booking, setBooking] = useState<BookingDraft | null>(null);
-  const [method, setMethod] = useState("QRIS");
-  const [ready, setReady] = useState(false);
-  useEffect(() => { const draft = readDraft(); setBooking(draft); if (draft) setMethod(draft.paymentMethod || "QRIS"); setReady(true); }, []);
-  function pay() { if (!booking) return; const updated = { ...booking, paymentMethod: method }; saveDraft(updated); window.location.href = `/booking/receipt?id=${encodeURIComponent(updated.id)}`; }
+  const router = useRouter();
+  const { ready, draft: booking } = useBookingDraft();
+  // null = belum dipilih user -> pakai metode yang tersimpan di draft
+  const [picked, setMethod] = useState<string | null>(null);
+  const method = picked ?? (booking?.paymentMethod || "QRIS");
+  function pay() { if (!booking) return; const updated = { ...booking, paymentMethod: method }; saveDraft(updated); router.push(`/booking/receipt?id=${encodeURIComponent(updated.id)}`); }
   const total = booking ? booking.seats.length * booking.price : 0;
   return <><Navbar/><main className="mx-auto min-h-[75vh] max-w-4xl px-4 py-10 sm:px-6"><Link href="/" className="text-sm text-mist hover:text-amber">← Beranda</Link><div className="mt-6"><p className="text-xs font-semibold uppercase tracking-[.25em] text-amber">Tahap 3 dari 4</p><h1 className="mt-2 font-display text-3xl font-bold">Konfirmasi pesanan</h1><p className="mt-2 text-mist">Periksa kembali detail tiket sebelum melanjutkan pembayaran.</p></div>{!ready ? <p className="mt-8 text-mist">Memuat pesanan...</p> : !booking ? <div className="mt-8 rounded-2xl border border-white/10 bg-plum p-6"><p>Data pemesanan tidak ditemukan. Silakan pilih film dan kursi terlebih dahulu.</p><Link href="/" className="mt-4 inline-block rounded-full bg-amber px-5 py-2.5 font-semibold text-ink">Cari film</Link></div> : <div className="mt-8 grid gap-6 md:grid-cols-[1fr_320px]"><section className="rounded-3xl border border-white/10 bg-plum p-6"><p className="text-xs uppercase tracking-[.2em] text-amber">Detail tiket</p><h2 className="mt-3 font-display text-2xl font-bold">{booking.movieTitle}</h2><div className="mt-5 grid gap-4 text-sm sm:grid-cols-2"><div><p className="text-mist">Bioskop</p><b>{booking.cinema}</b></div><div><p className="text-mist">Studio</p><b>{booking.studio}</b></div><div><p className="text-mist">Tanggal</p><b>{booking.dateLabel}</b></div><div><p className="text-mist">Jam tayang</p><b>{booking.time}</b></div><div className="sm:col-span-2"><p className="text-mist">Nomor kursi</p><b>{booking.seats.join(", ")}</b></div></div><div className="mt-6 border-t border-white/10 pt-5"><p className="mb-3 text-sm font-semibold">Pilih metode pembayaran</p><div className="grid grid-cols-2 gap-3">{methods.map((item) => <button key={item} onClick={() => setMethod(item)} className={`rounded-xl border p-3 text-sm font-semibold transition ${method === item ? "border-amber bg-amber/10 text-amber" : "border-white/15 text-mist hover:border-white/40"}`}>{item}</button>)}</div></div></section><aside className="h-fit rounded-3xl border border-white/10 bg-plum p-6"><h2 className="font-display text-xl font-bold">Rincian pembayaran</h2><div className="mt-5 flex justify-between text-sm"><span className="text-mist">{booking.seats.length} kursi × {rupiah(booking.price)}</span><b>{rupiah(total)}</b></div><div className="mt-4 flex justify-between border-t border-white/10 pt-4"><b>Total bayar</b><strong className="text-xl text-amber">{rupiah(total)}</strong></div><button onClick={pay} className="mt-6 w-full rounded-full bg-amber px-5 py-3 font-bold text-ink hover:bg-paper">Bayar sekarang</button><p className="mt-3 text-center text-xs text-mist">Demo pembayaran untuk keperluan tugas.</p></aside></div>}</main><Footer/></>;
 }
