@@ -1,8 +1,13 @@
 import Link from "next/link";
-import type { Movie } from "@/lib/movies";
-import Poster from "./Poster";
 
-export type { Movie };
+export type Movie = {
+  id: string;
+  title: string;
+  genre: string;
+  duration: string; // contoh: "2j 15m"
+  rating: string; // contoh: "13+"
+  posterUrl?: string;
+};
 
 export function MovieCard({ movie }: { movie: Movie }) {
   return (
@@ -10,17 +15,24 @@ export function MovieCard({ movie }: { movie: Movie }) {
       href={`/film/${movie.id}`}
       className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber"
     >
-      <div className="relative">
-        <Poster movie={movie} />
+      <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-plum">
+        {movie.posterUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={movie.posterUrl}
+            alt={`Poster ${movie.title}`}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        )}
         <span className="absolute left-2 top-2 rounded bg-ink/80 px-2 py-0.5 text-xs font-semibold">
           {movie.rating}
         </span>
       </div>
-      <h3 className="mt-3 font-display text-lg font-semibold leading-tight group-hover:text-amber">
+      <h3 className="mt-3 font-display text-lg font-semibold leading-tight">
         {movie.title}
       </h3>
       <p className="text-sm text-mist">
-        {movie.genre.join(", ")} · {movie.duration}
+        {movie.genre} · {movie.duration}
       </p>
     </Link>
   );

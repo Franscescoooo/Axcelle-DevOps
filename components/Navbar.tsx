@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import Logo from "./Logo";
 
 const links = [
-  { href: "/#film", label: "Film" },
-  { href: "/#bioskop", label: "Bioskop" },
-  { href: "/#promo", label: "Promo" },
-  { href: "/#cara-pesan", label: "Cara pesan" },
+  { href: "#film", label: "Film" },
+  { href: "#bioskop", label: "Bioskop" },
+  { href: "#promo", label: "Promo" },
+  { href: "#cara-pesan", label: "Cara pesan" },
 ];
 
 type SessionUser = { name: string; email: string };
