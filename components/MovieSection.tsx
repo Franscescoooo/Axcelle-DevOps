@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MovieCard, MovieCardPlaceholder, type Movie } from "./MovieCard";
+import type { Movie } from "@/lib/movies";
+import { MovieCard, MovieCardPlaceholder } from "./MovieCard";
 
 type Props = {
   nowShowing: Movie[];
@@ -50,7 +51,7 @@ export default function MovieSection({ nowShowing, comingSoon }: Props) {
       {movies.length === 0 && (
         <p className="mt-8 text-mist">
           Belum ada film di daftar ini. Tambahkan data film di{" "}
-          <code className="rounded bg-plum px-1.5 py-0.5 text-sm text-paper">app/page.tsx</code>{" "}
+          <code className="rounded bg-plum px-1.5 py-0.5 text-sm text-paper">lib/movies.ts</code>{" "}
           dan kartu film akan muncul di sini.
         </p>
       )}
