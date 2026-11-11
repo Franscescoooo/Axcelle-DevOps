@@ -1,0 +1,72 @@
+name: axcelle
+
+services:
+  # ---------- Database ----------
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: axcelle
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # init.sql hanya dijalankan saat volume pgdata masih kosong (pertama kali)
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d axcelle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Tidak ada "ports": database tidak bisa diakses dari luar Docker
+
+  # ---------- Backend ----------
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/axcelle
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Tidak ada "ports": hanya frontend yang boleh memanggil backend
+
+  # ---------- Frontend ----------
+  frontend:
+    build: .
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:4000
+      AUTH_SECRET: ${AUTH_SECRET:?Isi AUTH_SECRET di file .env}
+    volumes:
+      - userdata:/app/data   # sementara: penyimpanan users.json
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+  # ---------- Tugas sekali jalan: sinkronisasi TMDB -> database ----------
+  # Jalankan dengan: docker compose run --rm sync
+  sync:
+    build: ./backend
+    profiles: ["tools"]
+    command: ["node", "dist/sync-tmdb.js"]
+    environment:
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/axcelle
+      TMDB_API_KEY: ${TMDB_API_KEY:?Isi TMDB_API_KEY di file .env}
+      SYNC_LIMIT: ${SYNC_LIMIT:-10}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  userdata:

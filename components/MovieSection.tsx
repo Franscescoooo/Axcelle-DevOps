@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MovieCard, MovieCardPlaceholder, type Movie } from "./MovieCard";
+import type { Movie } from "@/lib/movies";
+import { MovieCard, MovieCardPlaceholder } from "./MovieCard";
 
 type Props = {
   nowShowing: Movie[];
