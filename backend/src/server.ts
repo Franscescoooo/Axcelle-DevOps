@@ -152,5 +152,114 @@ app.get("/api/movies/:id", async (req, res) => {
   res.json({ ...toMovie(rows[0]), schedule: [...grouped.values()] });
 });
 
+/* ---------- Cari jadwal (form di beranda) ---------- */
+
+const DAYS_AHEAD = 3; // sama dengan jumlah hari jadwal yang dibuat sync-tmdb.ts
+const dayLabel = new Intl.DateTimeFormat("id-ID", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "Asia/Jakarta",
+});
+
+// Tanggal YYYY-MM-DD di zona Asia/Jakarta, `offset` hari dari sekarang
+function jakartaDate(offset: number) {
+  return new Date(Date.now() + offset * 86_400_000).toLocaleDateString("en-CA", {
+    timeZone: "Asia/Jakarta",
+  });
+}
+
+function queryText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+// Database lama (dibuat sebelum ada kolom kota) ikut diperbarui otomatis,
+// jadi anggota tim tidak perlu `docker compose down -v`.
+async function ensureSchema() {
+  await pool.query(`ALTER TABLE cinemas ADD COLUMN IF NOT EXISTS city TEXT`);
+  await pool.query(
+    `UPDATE cinemas SET city = v.city
+     FROM (VALUES ('Eclipse Plaza Utara', 'Medan'),
+                  ('Eclipse Central', 'Jakarta'),
+                  ('Eclipse Riverside', 'Bandung')) AS v(name, city)
+     WHERE cinemas.name = v.name AND cinemas.city IS NULL`
+  );
+}
+
+// GET /api/cinemas -> pilihan untuk form: kota, bioskop, dan tanggal yang punya jadwal
+app.get("/api/cinemas", async (_req, res) => {
+  const { rows } = await pool.query<{ name: string; address: string; city: string | null }>(
+    `SELECT name, address, city FROM cinemas ORDER BY city NULLS LAST, name`
+  );
+  const cinemas = rows.map((r) => ({ name: r.name, address: r.address, city: r.city ?? "Lainnya" }));
+  const cities = [...new Set(cinemas.map((c) => c.city))];
+  const dates = Array.from({ length: DAYS_AHEAD }, (_, offset) => {
+    const value = jakartaDate(offset);
+    const label = dayLabel.format(new Date(`${value}T12:00:00+07:00`));
+    return { value, offset, label: offset === 0 ? `Hari ini, ${label}` : label };
+  });
+  res.json({ cities, cinemas, dates });
+});
+
+// GET /api/showtimes?kota=&bioskop=&tanggal=YYYY-MM-DD
+// Semua filter opsional. Jadwal yang jamnya sudah lewat tidak ditampilkan.
+app.get("/api/showtimes", async (req, res) => {
+  const city = queryText(req.query.kota);
+  const cinema = queryText(req.query.bioskop);
+  const tanggal = queryText(req.query.tanggal);
+  const date = tanggal && /^\d{4}-\d{2}-\d{2}$/.test(tanggal) ? tanggal : jakartaDate(0);
+
+  const { rows: st } = await pool.query<{
+    movie_id: number;
+    cinema: string;
+    address: string;
+    city: string | null;
+    studio: string;
+    format: string;
+    time: string;
+    price: number;
+  }>(
+    `SELECT st.movie_id, c.name AS cinema, c.address, c.city, s.name AS studio, s.format,
+            to_char(st.start_time AT TIME ZONE 'Asia/Jakarta', 'HH24:MI') AS time,
+            st.price
+     FROM showtimes st
+     JOIN studios s ON s.id = st.studio_id
+     JOIN cinemas c ON c.id = s.cinema_id
+     WHERE (st.start_time AT TIME ZONE 'Asia/Jakarta')::date = $1::date
+       AND st.start_time > now()
+       AND ($2::text IS NULL OR c.city = $2)
+       AND ($3::text IS NULL OR c.name = $3)
+     ORDER BY c.name, st.start_time`,
+    [date, city, cinema]
+  );
+
+  const movieIds = [...new Set(st.map((r) => r.movie_id))];
+  const { rows: movies } = movieIds.length
+    ? await pool.query<MovieRow>(`SELECT ${COLS} FROM movies WHERE id = ANY($1::int[]) ORDER BY title`, [movieIds])
+    : { rows: [] as MovieRow[] };
+
+  // Kelompokkan: film -> bioskop -> jam tayang
+  const results = movies.map((m) => {
+    const byCinema = new Map<
+      string,
+      { cinema: string; address: string; city: string; showtimes: { time: string; studio: string; format: string; price: number }[] }
+    >();
+    for (const r of st) {
+      if (r.movie_id !== m.id) continue;
+      if (!byCinema.has(r.cinema)) {
+        byCinema.set(r.cinema, { cinema: r.cinema, address: r.address, city: r.city ?? "Lainnya", showtimes: [] });
+      }
+      byCinema.get(r.cinema)!.showtimes.push({ time: r.time, studio: r.studio, format: r.format, price: r.price });
+    }
+    return { movie: toMovie(m), cinemas: [...byCinema.values()] };
+  });
+
+  res.json({ date, results });
+});
+
 const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => console.log(`Backend berjalan di http://localhost:${port}`));
+ensureSchema()
+  .catch((err) => console.error("Gagal memperbarui skema database:", err))
+  .finally(() => {
+    app.listen(port, () => console.log(`Backend berjalan di http://localhost:${port}`));
+  });

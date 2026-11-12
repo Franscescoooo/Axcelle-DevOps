@@ -28,10 +28,13 @@ function BookingSeatContent() {
   const cinema = query.get("bioskop") || "Eclipse Plaza Utara";
   const time = query.get("jam") || "19:30";
   const day = Number(query.get("hari") || 0);
+  // Dari halaman /jadwal studio & harga ikut dikirim (jadwal besok/lusa bisa beda studio dengan hari ini)
+  const studioParam = query.get("studio");
+  const priceParam = Number(query.get("harga")) || 0;
   const show = useMemo<SelectedShow>(() => {
     const matching = movie?.schedule?.find((s) => s.cinema === cinema)?.showtimes.find((s) => s.time === time);
-    return { cinema, time, studio: matching?.studio || "Studio 1", price: matching?.price || 50000 };
-  }, [movie, cinema, time]);
+    return { cinema, time, studio: studioParam || matching?.studio || "Studio 1", price: priceParam || matching?.price || 50000 };
+  }, [movie, cinema, time, studioParam, priceParam]);
 
   useEffect(() => {
     let cancelled = false;

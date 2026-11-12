@@ -1,5 +1,13 @@
-const fieldClass =
-  "mt-1 w-full rounded-lg border border-ink/20 bg-[#252240] px-3 py-2.5 text-white outline-none focus:border-amber focus:ring-2 focus:ring-amber/30";
+import { Suspense } from "react";
+import ScheduleSearch from "@/components/ScheduleSearch";
+import { getSearchOptions } from "@/lib/schedule";
+
+// Pilihan kota/bioskop/tanggal diambil dari backend saat permintaan masuk,
+// jadi harus berada di dalam <Suspense> (aturan cacheComponents).
+async function HeroSearch() {
+  const options = await getSearchOptions();
+  return <ScheduleSearch options={options} />;
+}
 
 export default function Hero() {
   return (
@@ -19,46 +27,11 @@ export default function Hero() {
         </p>
 
         {/* Form pencarian berbentuk tiket */}
-        <form
-          action="/jadwal"
-          className="relative mt-10 rounded-2xl bg-plum/60 p-6 text-white shadow-2xl sm:p-8"
-        >
-          {/* Lekukan tiket kiri-kanan */}
-          <span aria-hidden className="absolute -left-3 top-1/2 hidden h-6 w-6 -translate-y-1/2 rounded-full bg-ink md:block" />
-          <span aria-hidden className="absolute -right-3 top-1/2 hidden h-6 w-6 -translate-y-1/2 rounded-full bg-ink md:block" />
-
-          <div className="grid gap-5 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
-            <label className="block text-sm font-medium">
-              Kota
-              <select name="kota" defaultValue="" className={fieldClass}>
-                <option value="" disabled>Pilih kota</option>
-                <option>Medan</option>
-                <option>Jakarta</option>
-                <option>Bandung</option>
-              </select>
-            </label>
-
-            <label className="block text-sm font-medium">
-              Bioskop
-              <select name="bioskop" defaultValue="" className={fieldClass}>
-                <option value="" disabled>Pilih bioskop</option>
-                <option>Semua bioskop</option>
-              </select>
-            </label>
-
-            <label className="block text-sm font-medium">
-              Tanggal
-              <input type="date" name="tanggal" className={fieldClass} />
-            </label>
-
-            <button
-              type="submit"
-              className="rounded-lg bg-amber px-6 py-3 font-semibold text-black transition-colors hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velvet"
-            >
-              Cari jadwal
-            </button>
-          </div>
-        </form>
+        <div className="mt-10">
+          <Suspense fallback={<ScheduleSearch options={null} />}>
+            <HeroSearch />
+          </Suspense>
+        </div>
       </div>
     </section>
   );

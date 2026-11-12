@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS movies (
 CREATE TABLE IF NOT EXISTS cinemas (
   id      SERIAL PRIMARY KEY,
   name    TEXT UNIQUE NOT NULL,
-  address TEXT NOT NULL
+  address TEXT NOT NULL,
+  city    TEXT                                    -- dipakai filter "Kota" di form Cari jadwal
 );
 
 CREATE TABLE IF NOT EXISTS studios (
@@ -46,10 +47,10 @@ CREATE TABLE IF NOT EXISTS showtimes (
 );
 
 -- Data bioskop contoh (sama dengan data dummy di lib/movies.ts)
-INSERT INTO cinemas (name, address) VALUES
-  ('Eclipse Plaza Utara', 'Lantai 3, Jl. Contoh No. 1'),
-  ('Eclipse Central',     'Lantai 5, Jl. Contoh No. 2'),
-  ('Eclipse Riverside',   'Lantai 2, Jl. Contoh No. 3')
+INSERT INTO cinemas (name, address, city) VALUES
+  ('Eclipse Plaza Utara', 'Lantai 3, Jl. Contoh No. 1', 'Medan'),
+  ('Eclipse Central',     'Lantai 5, Jl. Contoh No. 2', 'Jakarta'),
+  ('Eclipse Riverside',   'Lantai 2, Jl. Contoh No. 3', 'Bandung')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO studios (cinema_id, name, format, base_price)
