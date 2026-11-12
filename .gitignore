@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# laporan tugas (bukan bagian dari kode)
+laporan/
