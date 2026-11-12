@@ -10,6 +10,7 @@ const links = [
   { href: "#bioskop", label: "Bioskop" },
   { href: "#promo", label: "Promo" },
   { href: "#cara-pesan", label: "Cara pesan" },
+  { href: "/history", label: "Riwayat" },
 ];
 
 type SessionUser = { name: string; email: string };
@@ -47,13 +48,13 @@ export default function Navbar() {
 
         <nav aria-label="Menu utama" className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
-            <a
+            <Link
               key={l.href}
               href={l.href}
               className="text-sm text-mist transition-colors hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber"
             >
               {l.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -109,9 +110,9 @@ export default function Navbar() {
           <ul className="flex flex-col">
             {links.map((l) => (
               <li key={l.href}>
-                <a href={l.href} onClick={() => setOpen(false)} className="block py-3 text-mist hover:text-paper">
+                <Link href={l.href} onClick={() => setOpen(false)} className="block py-3 text-mist hover:text-paper">
                   {l.label}
-                </a>
+                </Link>
               </li>
             ))}
             <li className="pt-2">
