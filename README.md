@@ -21,3 +21,10 @@ Next.js (frontend) + Express (backend) + PostgreSQL, dijalankan lewat Docker Com
 5. Buka http://localhost:3000
 
 Reset total (hapus database & akun): `docker compose down -v`
+
+Project ini menggunakan GitHub Actions
+untuk menjalankan proses CI/CD secara otomatis
+ketika terdapat push ke repository.
+
+Pipeline menjalankan tahapan sesuai konfigurasi
+workflow yang tersedia di folder .github/workflows.
